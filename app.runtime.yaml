@@ -4,13 +4,13 @@ slug: "postsyncer"
 services:
   web:
     build: "npm run build --workspace @postsyncer/web"
-    start: "npm run dev --workspace @postsyncer/web"
+    start: "npm run start --workspace @postsyncer/web"
   api:
     build: "npm run build --workspace @postsyncer/api"
-    start: "npm run dev --workspace @postsyncer/api"
+    start: "npm run start --workspace @postsyncer/api"
   worker:
     build: "npm run build --workspace @postsyncer/worker"
-    start: "npm run dev --workspace @postsyncer/worker"
+    start: "npm run start --workspace @postsyncer/worker"
   redis:
     image: "redis:7-alpine"
   postgres:
@@ -38,3 +38,8 @@ integration:
 env_contract:
   - "HOLABOSS_USER_ID"
   - "PLATFORM_INTEGRATION_TOKEN"
+  - "PLATFORM_X_API_URL"
+  - "PUBLISH_QUEUE_NAME"
+  - "PUBLISH_RETRY_ATTEMPTS"
+  - "PUBLISH_RETRY_BACKOFF_MS"
+  - "PUBLISH_QUEUE_CONCURRENCY"

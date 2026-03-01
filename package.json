@@ -11,6 +11,11 @@
     "build": "npm run build --workspaces --if-present",
     "dev": "npm run dev --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present"
+    "lint": "npm run lint --workspaces --if-present",
+    "doctor": "tsx scripts/doctor.ts",
+    "smoke:runtime": "bash scripts/smoke-runtime.sh"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2"
   }
 }

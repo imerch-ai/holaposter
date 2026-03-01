@@ -15,3 +15,12 @@ worker.on("failed", (job, error) => {
 });
 
 console.info("postsyncer worker started");
+
+const shutdown = async (signal: string) => {
+  console.info("postsyncer worker shutting down", { signal });
+  await worker.close();
+  process.exit(0);
+};
+
+process.on("SIGTERM", () => void shutdown("SIGTERM"));
+process.on("SIGINT", () => void shutdown("SIGINT"));

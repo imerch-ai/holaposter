@@ -1,0 +1,97 @@
+services:
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-postsyncer}
+      POSTGRES_USER: ${POSTGRES_USER:-postsyncer}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postsyncer}
+    volumes:
+      - postsyncer-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-postsyncer} -d ${POSTGRES_DB:-postsyncer}"
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8080
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      PUBLISH_QUEUE_NAME: ${PUBLISH_QUEUE_NAME:-publish_queue}
+      PUBLISH_RETRY_ATTEMPTS: ${PUBLISH_RETRY_ATTEMPTS:-5}
+      PUBLISH_RETRY_BACKOFF_MS: ${PUBLISH_RETRY_BACKOFF_MS:-1000}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      PUBLISH_QUEUE_NAME: ${PUBLISH_QUEUE_NAME:-publish_queue}
+      PUBLISH_RETRY_ATTEMPTS: ${PUBLISH_RETRY_ATTEMPTS:-5}
+      PUBLISH_RETRY_BACKOFF_MS: ${PUBLISH_RETRY_BACKOFF_MS:-1000}
+      PUBLISH_QUEUE_CONCURRENCY: ${PUBLISH_QUEUE_CONCURRENCY:-5}
+    depends_on:
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"const net=require('node:net');const socket=net.connect(6379,'redis',()=>{socket.end();process.exit(0);});socket.on('error',()=>process.exit(1));setTimeout(()=>process.exit(1),1500);\""
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/ >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postsyncer-postgres:
