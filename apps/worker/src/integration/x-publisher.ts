@@ -69,10 +69,26 @@ export class PlatformXPublisher implements XPublisher {
 
     const publishPayload = (await publishResponse.json()) as {
       external_post_id?: string;
+      externalPostId?: string;
       postId?: string;
       id?: string;
+      data?: {
+        external_post_id?: string;
+        externalPostId?: string;
+        postId?: string;
+        id?: string;
+      };
     };
-    const externalPostId = publishPayload.external_post_id ?? publishPayload.postId ?? publishPayload.id;
+    const externalPostId =
+      publishPayload.external_post_id ??
+      publishPayload.externalPostId ??
+      publishPayload.postId ??
+      publishPayload.id ??
+      publishPayload.data?.external_post_id ??
+      publishPayload.data?.externalPostId ??
+      publishPayload.data?.postId ??
+      publishPayload.data?.id ??
+      draftId;
     if (!externalPostId) {
       throw new Error("x_publish_failed:missing_external_post_id");
     }

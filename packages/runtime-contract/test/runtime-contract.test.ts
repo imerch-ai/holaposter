@@ -10,5 +10,7 @@ describe("runtime contract", () => {
     const contract = await loadRuntimeContract(contractPath);
     expect(contract.integration.destination).toBe("x");
     expect(contract.integration.credential_source).toBe("platform");
+    expect(contract.env_contract).toContain("CORS_ALLOWED_ORIGINS");
+    expect(contract.env_contract).toContain("VITE_API_BASE_URL");
   });
 });

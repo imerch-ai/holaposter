@@ -49,6 +49,29 @@ describe("PlatformXPublisher", () => {
     expect(result).toEqual({ external_post_id: "published-1" });
   });
 
+  it("falls back to draft id when publish response has no external id", async () => {
+    process.env.WORKSPACE_API_URL = "http://workspace-api:3033";
+    process.env.WORKSPACE_X_INTEGRATION_ID = "integration-1";
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ postId: "draft-1" })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ status: "queued" })
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const publisher = new PlatformXPublisher();
+    const result = await publisher.publishToX({ holaboss_user_id: "u1", content: "hello from worker" });
+
+    expect(result).toEqual({ external_post_id: "draft-1" });
+  });
+
   it("fails fast when workspace integration id is missing", async () => {
     process.env.WORKSPACE_API_URL = "http://workspace-api:3033";
     delete process.env.WORKSPACE_X_INTEGRATION_ID;
