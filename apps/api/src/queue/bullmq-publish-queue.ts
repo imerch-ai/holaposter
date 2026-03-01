@@ -27,6 +27,15 @@ export class BullMqPublishQueue implements PublishQueue {
     await this.queue.add("publish_post", payload);
   }
 
+  async schedule(payload: PublishQueuePayload, cron: string): Promise<void> {
+    await this.queue.add("publish_post", payload, {
+      jobId: `schedule:${payload.post_id}:${payload.holaboss_user_id}:${Buffer.from(cron).toString("base64url")}`,
+      repeat: {
+        pattern: cron
+      }
+    });
+  }
+
   async close(): Promise<void> {
     await this.queue.close();
   }

@@ -11,6 +11,7 @@
     "build": "npm run build --workspaces --if-present",
     "dev": "npm run dev --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
+    "test:e2e": "npm exec vitest run test/e2e",
     "lint": "npm run lint --workspaces --if-present",
     "doctor": "tsx scripts/doctor.ts",
     "smoke:runtime": "bash scripts/smoke-runtime.sh"

@@ -20,7 +20,15 @@ bash scripts/smoke-runtime.sh
 npm run doctor
 ```
 
-4. Stop runtime stack:
+4. Run e2e acceptance checks (compose stack must stay up):
+
+```bash
+npm run test:e2e
+```
+
+If `WORKSPACE_X_INTEGRATION_ID` or workspace-api connectivity is missing, publish tests may end in `failed` state (still valid terminal behavior for failure-path coverage).
+
+5. Stop runtime stack:
 
 ```bash
 docker compose down -v

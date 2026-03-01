@@ -2,7 +2,7 @@ import { Queue, Worker } from "bullmq";
 
 import { processPublishJob, type PublishJobPayload } from "./pipeline/process-publish-job";
 import { PlatformXPublisher } from "./integration/x-publisher";
-import { ConsoleJobStateRepository } from "./repository/job-state-repo";
+import { CompositeJobStateRepository, ConsoleJobStateRepository, HttpJobStateRepository } from "./repository/job-state-repo";
 
 const queueName = process.env.PUBLISH_QUEUE_NAME ?? "publish_queue";
 const redisHost = process.env.REDIS_HOST ?? "127.0.0.1";
@@ -25,7 +25,7 @@ export function createPublishQueue() {
 
 export function createPublishWorker() {
   const xPublisher = new PlatformXPublisher();
-  const jobRepository = new ConsoleJobStateRepository();
+  const jobRepository = new CompositeJobStateRepository([new HttpJobStateRepository(), new ConsoleJobStateRepository()]);
 
   return new Worker<PublishJobPayload>(
     queueName,

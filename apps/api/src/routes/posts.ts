@@ -35,4 +35,14 @@ export async function registerPostRoutes(app: FastifyInstance, store: PostStore)
   app.get("/posts", async () => {
     return Array.from(store.byId.values());
   });
+
+  app.get("/posts/:id", async (request, reply) => {
+    const params = request.params as { id?: string };
+    const postId = params.id;
+    if (!postId || !store.byId.has(postId)) {
+      return reply.code(404).send({ error: "post not found" });
+    }
+
+    return store.byId.get(postId);
+  });
 }

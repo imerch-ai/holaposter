@@ -64,6 +64,8 @@ services:
       WORKSPACE_API_URL: ${WORKSPACE_API_URL:-http://host.docker.internal:3033}
       WORKSPACE_X_INTEGRATION_ID: ${WORKSPACE_X_INTEGRATION_ID:-}
       PLATFORM_INTEGRATION_TOKEN: ${PLATFORM_INTEGRATION_TOKEN:-}
+      API_INTERNAL_URL: ${API_INTERNAL_URL:-http://api:8080}
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-}
     depends_on:
       redis:
         condition: service_healthy

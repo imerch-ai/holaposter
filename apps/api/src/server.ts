@@ -3,6 +3,7 @@ import Fastify from "fastify";
 import type { PostRecord } from "./domain/types";
 import { NoopPublishQueue, type PublishQueue } from "./queue/publish-queue";
 import { registerHealthRoutes } from "./routes/health";
+import { registerInternalJobStateRoutes } from "./routes/internal-job-states";
 import { registerPostRoutes } from "./routes/posts";
 import { registerPublishRoutes } from "./routes/publish";
 
@@ -18,6 +19,7 @@ export function buildServer(options: BuildServerOptions = {}) {
   void registerHealthRoutes(app);
   void registerPostRoutes(app, postStore);
   void registerPublishRoutes(app, postStore, queue);
+  void registerInternalJobStateRoutes(app, postStore);
 
   return app;
 }

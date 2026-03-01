@@ -18,3 +18,44 @@ export class ConsoleJobStateRepository implements JobStateRepository {
     console.info("publish_job_state", state);
   }
 }
+
+export class HttpJobStateRepository implements JobStateRepository {
+  private readonly callbackUrl: string;
+  private readonly token: string;
+
+  constructor() {
+    const apiBaseUrl = process.env.API_INTERNAL_URL ?? "http://api:8080";
+    this.callbackUrl = `${apiBaseUrl.replace(/\/+$/, "")}/internal/job-states`;
+    this.token = process.env.INTERNAL_API_TOKEN ?? "";
+  }
+
+  async save(state: PublishJobState): Promise<void> {
+    const response = await fetch(this.callbackUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(this.token ? { Authorization: `Bearer ${this.token}` } : {})
+      },
+      body: JSON.stringify(state)
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`job_state_sync_failed:${response.status}:${body}`);
+    }
+  }
+}
+
+export class CompositeJobStateRepository implements JobStateRepository {
+  private readonly repositories: JobStateRepository[];
+
+  constructor(repositories: JobStateRepository[]) {
+    this.repositories = repositories;
+  }
+
+  async save(state: PublishJobState): Promise<void> {
+    for (const repository of this.repositories) {
+      await repository.save(state);
+    }
+  }
+}
