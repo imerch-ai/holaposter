@@ -6,6 +6,9 @@
   "scripts": {
     "test": "vitest run --passWithNoTests"
   },
+  "dependencies": {
+    "bullmq": "^5.40.3"
+  },
   "devDependencies": {
     "vitest": "^3.0.0"
   }
