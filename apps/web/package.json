@@ -1,0 +1,12 @@
+{
+  "name": "@postsyncer/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.0"
+  }
+}

@@ -1,0 +1,40 @@
+app_id: "postsyncer-ts-lite"
+name: "Postsyncer TS Lite"
+slug: "postsyncer"
+services:
+  web:
+    build: "npm run build --workspace @postsyncer/web"
+    start: "npm run dev --workspace @postsyncer/web"
+  api:
+    build: "npm run build --workspace @postsyncer/api"
+    start: "npm run dev --workspace @postsyncer/api"
+  worker:
+    build: "npm run build --workspace @postsyncer/worker"
+    start: "npm run dev --workspace @postsyncer/worker"
+  redis:
+    image: "redis:7-alpine"
+  postgres:
+    image: "postgres:16-alpine"
+healthchecks:
+  web:
+    path: "/"
+    timeout_s: 10
+  api:
+    path: "/health"
+    timeout_s: 10
+  worker:
+    path: "worker"
+    timeout_s: 10
+jobs:
+  queue_name: "publish_queue"
+  retry_attempts: 5
+  retry_backoff_ms: 1000
+  repeat_cron: "*/15 * * * *"
+  concurrency: 5
+integration:
+  destination: "x"
+  credential_source: "platform"
+  holaboss_user_id_required: true
+env_contract:
+  - "HOLABOSS_USER_ID"
+  - "PLATFORM_INTEGRATION_TOKEN"
