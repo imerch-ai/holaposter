@@ -1,6 +1,6 @@
-app_id: "postsyncer-ts-lite"
-name: "Postsyncer TS Lite"
-slug: "postsyncer"
+app_id: "holaposter-ts-lite"
+name: "HolaPoster TS Lite"
+slug: "holaposter"
 services:
   web:
     build: "npm run build --workspace @postsyncer/web"

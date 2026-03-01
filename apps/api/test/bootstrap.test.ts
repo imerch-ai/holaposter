@@ -7,6 +7,6 @@ describe("repo bootstrap", () => {
     const packagePath = resolve(process.cwd(), "../../package.json");
     const raw = await readFile(packagePath, "utf-8");
     const pkg = JSON.parse(raw) as { name?: string };
-    expect(pkg.name).toBe("postsyncer-app");
+    expect(pkg.name).toBe("holaposter-app");
   });
 });
