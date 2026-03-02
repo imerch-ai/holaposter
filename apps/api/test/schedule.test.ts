@@ -5,6 +5,7 @@ import { buildServer } from "../src/server";
 
 describe("POST /posts/:id/schedule", () => {
   it("registers repeatable publish job", async () => {
+    process.env.HOLABOSS_USER_ID = "u1";
     const queue: PublishQueue = {
       enqueue: vi.fn().mockResolvedValue(undefined),
       schedule: vi.fn().mockResolvedValue(undefined)
@@ -22,7 +23,6 @@ describe("POST /posts/:id/schedule", () => {
       method: "POST",
       url: `/posts/${postId}/schedule`,
       payload: {
-        holaboss_user_id: "u1",
         cron: "*/1 * * * * *"
       }
     });

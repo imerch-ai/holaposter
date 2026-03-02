@@ -10,6 +10,7 @@ export interface PostRecord {
   error_code?: string;
   error_message?: string;
   schedule_cron?: string;
+  scheduled_at?: string;
 }
 
 export interface PublishQueuePayload {
