@@ -1,6 +1,7 @@
 import { buildServer } from "./server";
 import { BullMqPublishQueue } from "./queue/bullmq-publish-queue";
 import { sharedPostStore } from "./store/post-store";
+import { startMcpServer } from "./mcp/server";
 
 async function start() {
   const port = Number(process.env.PORT ?? "8080");
@@ -17,8 +18,13 @@ async function start() {
     process.exit(1);
   }
 
+  const mcpPort = Number(process.env.MCP_PORT ?? "3099");
+  const mcpServer = await startMcpServer({ port: mcpPort, store: sharedPostStore, queue });
+  console.info("postsyncer_mcp_started", { port: mcpPort });
+
   const shutdown = async (signal: string) => {
     console.info("postsyncer_api_shutdown", { signal });
+    mcpServer.close();
     await app.close();
     await queue.close();
     process.exit(0);
