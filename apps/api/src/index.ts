@@ -1,11 +1,12 @@
 import { buildServer } from "./server";
 import { BullMqPublishQueue } from "./queue/bullmq-publish-queue";
+import { sharedPostStore } from "./store/post-store";
 
 async function start() {
   const port = Number(process.env.PORT ?? "8080");
   const host = process.env.HOST ?? "0.0.0.0";
   const queue = new BullMqPublishQueue();
-  const app = buildServer({ queue });
+  const app = buildServer({ queue, store: sharedPostStore });
 
   try {
     await app.listen({ host, port });

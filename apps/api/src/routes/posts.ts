@@ -11,6 +11,7 @@ const createPostSchema = z.object({
 
 export interface PostStore {
   byId: Map<string, PostRecord>;
+  list: PostRecord[];
 }
 
 export async function registerPostRoutes(app: FastifyInstance, store: PostStore): Promise<void> {

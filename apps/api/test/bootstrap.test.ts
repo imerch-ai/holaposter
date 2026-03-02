@@ -9,4 +9,10 @@ describe("repo bootstrap", () => {
     const pkg = JSON.parse(raw) as { name?: string };
     expect(pkg.name).toBe("holaposter-app");
   });
+
+  it("shared post store is importable", async () => {
+    const { sharedPostStore } = await import("../src/store/post-store");
+    expect(sharedPostStore).toBeDefined();
+    expect(sharedPostStore.byId).toBeInstanceOf(Map);
+  });
 });
