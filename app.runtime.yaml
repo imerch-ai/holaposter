@@ -25,6 +25,14 @@ healthchecks:
   worker:
     path: "worker"
     timeout_s: 10
+  mcp:
+    path: /mcp/health
+    timeout_s: 10
+mcp:
+  enabled: true
+  transport: http-sse
+  port: 3099
+  path: /mcp
 jobs:
   queue_name: "publish_queue"
   retry_attempts: 5

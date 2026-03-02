@@ -13,4 +13,11 @@ describe("runtime contract", () => {
     expect(contract.env_contract).toContain("CORS_ALLOWED_ORIGINS");
     expect(contract.env_contract).toContain("VITE_API_BASE_URL");
   });
+
+  it("loads mcp config when present", async () => {
+    const contractPath = resolve(process.cwd(), "../../app.runtime.yaml");
+    const contract = await loadRuntimeContract(contractPath);
+    expect(contract.mcp?.enabled).toBe(true);
+    expect(contract.mcp?.port).toBe(3099);
+  });
 });

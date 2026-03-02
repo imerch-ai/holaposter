@@ -33,6 +33,13 @@ const integrationSchema = z.object({
   holaboss_user_id_required: z.literal(true)
 });
 
+const mcpSchema = z.object({
+  enabled: z.boolean(),
+  transport: z.literal("http-sse"),
+  port: z.number().int().positive(),
+  path: z.string().min(1)
+}).optional();
+
 export const runtimeContractSchema = z.object({
   app_id: z.string().min(1),
   name: z.string().min(1),
@@ -41,11 +48,13 @@ export const runtimeContractSchema = z.object({
   healthchecks: z.object({
     web: healthcheckSchema,
     api: healthcheckSchema,
-    worker: healthcheckSchema
+    worker: healthcheckSchema,
+    mcp: healthcheckSchema.optional()
   }),
   jobs: jobsSchema,
   integration: integrationSchema,
-  env_contract: z.array(z.string().min(1)).min(1)
+  env_contract: z.array(z.string().min(1)).min(1),
+  mcp: mcpSchema
 });
 
 export type RuntimeContract = z.infer<typeof runtimeContractSchema>;
