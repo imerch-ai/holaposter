@@ -42,6 +42,7 @@ describe("POST /posts/:id/schedule", () => {
   });
 
   it("cancels a scheduled publish job", async () => {
+    process.env.HOLABOSS_USER_ID = "u1";
     const queue: PublishQueue = {
       enqueue: vi.fn().mockResolvedValue(undefined),
       schedule: vi.fn().mockResolvedValue(undefined),
@@ -54,9 +55,16 @@ describe("POST /posts/:id/schedule", () => {
     const create = await app.inject({ method: "POST", url: "/posts", payload: { content: "x" } });
     const postId = create.json().id as string;
 
+    // First schedule so the post has a cron stored
+    await app.inject({
+      method: "POST",
+      url: `/posts/${postId}/schedule`,
+      payload: { cron: "*/5 * * * *" }
+    });
+
     const res = await app.inject({ method: "DELETE", url: `/posts/${postId}/schedule` });
     expect(res.statusCode).toBe(200);
-    expect(queue.unschedule).toHaveBeenCalledWith(postId);
+    expect(queue.unschedule).toHaveBeenCalledWith(postId, "*/5 * * * *");
     await app.close();
   });
 });

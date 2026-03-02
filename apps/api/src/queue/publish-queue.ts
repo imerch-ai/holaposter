@@ -3,7 +3,7 @@ import type { PublishQueuePayload } from "../domain/types";
 export interface PublishQueue {
   enqueue(payload: PublishQueuePayload): Promise<void>;
   schedule(payload: PublishQueuePayload, cron: string): Promise<void>;
-  unschedule(postId: string): Promise<void>;
+  unschedule(postId: string, cron?: string): Promise<void>;
   getStats(): Promise<{ queued: number; publishing: number; failed: number }>;
   close(): Promise<void>;
 }
@@ -17,7 +17,7 @@ export class NoopPublishQueue implements PublishQueue {
     return;
   }
 
-  async unschedule(_postId: string): Promise<void> {
+  async unschedule(_postId: string, _cron?: string): Promise<void> {
     return;
   }
 

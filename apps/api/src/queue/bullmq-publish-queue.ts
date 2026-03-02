@@ -36,13 +36,11 @@ export class BullMqPublishQueue implements PublishQueue {
     });
   }
 
-  async unschedule(postId: string): Promise<void> {
-    const repeatable = await this.queue.getRepeatableJobs();
-    for (const job of repeatable) {
-      if (job.key.includes(`schedule:${postId}:`)) {
-        await this.queue.removeRepeatableByKey(job.key);
-      }
-    }
+  async unschedule(postId: string, cron?: string): Promise<void> {
+    if (!cron) return;
+    const holaboss_user_id = process.env.HOLABOSS_USER_ID ?? "";
+    const jobId = `schedule:${postId}:${holaboss_user_id}:${Buffer.from(cron).toString("base64url")}`;
+    await this.queue.removeRepeatable("publish_post", { pattern: cron }, jobId);
   }
 
   async getStats(): Promise<{ queued: number; publishing: number; failed: number }> {

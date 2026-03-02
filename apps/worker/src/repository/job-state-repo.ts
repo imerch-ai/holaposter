@@ -39,6 +39,12 @@ export class HttpJobStateRepository implements JobStateRepository {
       body: JSON.stringify(state)
     });
 
+    if (response.status === 404) {
+      // Post no longer exists in API memory (e.g. after restart). Skip silently.
+      console.warn("job_state_sync_skipped:post_not_found", { post_id: state.post_id });
+      return;
+    }
+
     if (!response.ok) {
       const body = await response.text();
       throw new Error(`job_state_sync_failed:${response.status}:${body}`);

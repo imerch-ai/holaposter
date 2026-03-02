@@ -85,8 +85,8 @@ export async function registerPublishRoutes(
     if (!postId || !store.byId.has(postId)) {
       return reply.code(404).send({ error: "post not found" });
     }
-    await queue.unschedule(postId);
     const post = store.byId.get(postId)!;
+    await queue.unschedule(postId, post.schedule_cron);
     post.schedule_cron = undefined;
     post.updated_at = new Date().toISOString();
     return reply.code(200).send({ post_id: postId, schedule_cron: null });
