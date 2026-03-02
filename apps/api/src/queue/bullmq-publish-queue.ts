@@ -36,6 +36,24 @@ export class BullMqPublishQueue implements PublishQueue {
     });
   }
 
+  async unschedule(postId: string): Promise<void> {
+    const repeatable = await this.queue.getRepeatableJobs();
+    for (const job of repeatable) {
+      if (job.key.includes(`schedule:${postId}:`)) {
+        await this.queue.removeRepeatableByKey(job.key);
+      }
+    }
+  }
+
+  async getStats(): Promise<{ queued: number; publishing: number; failed: number }> {
+    const counts = await this.queue.getJobCounts("wait", "active", "failed");
+    return {
+      queued: counts.wait ?? 0,
+      publishing: counts.active ?? 0,
+      failed: counts.failed ?? 0
+    };
+  }
+
   async close(): Promise<void> {
     await this.queue.close();
   }

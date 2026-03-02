@@ -8,7 +8,10 @@ describe("POST /posts/:id/schedule", () => {
     process.env.HOLABOSS_USER_ID = "u1";
     const queue: PublishQueue = {
       enqueue: vi.fn().mockResolvedValue(undefined),
-      schedule: vi.fn().mockResolvedValue(undefined)
+      schedule: vi.fn().mockResolvedValue(undefined),
+      unschedule: vi.fn().mockResolvedValue(undefined),
+      getStats: vi.fn().mockResolvedValue({ queued: 0, publishing: 0, failed: 0 }),
+      close: vi.fn().mockResolvedValue(undefined)
     };
     const app = buildServer({ queue });
 
@@ -35,6 +38,25 @@ describe("POST /posts/:id/schedule", () => {
       }),
       "*/1 * * * * *"
     );
+    await app.close();
+  });
+
+  it("cancels a scheduled publish job", async () => {
+    const queue: PublishQueue = {
+      enqueue: vi.fn().mockResolvedValue(undefined),
+      schedule: vi.fn().mockResolvedValue(undefined),
+      unschedule: vi.fn().mockResolvedValue(undefined),
+      getStats: vi.fn().mockResolvedValue({ queued: 0, publishing: 0, failed: 0 }),
+      close: vi.fn().mockResolvedValue(undefined)
+    };
+    const app = buildServer({ queue });
+
+    const create = await app.inject({ method: "POST", url: "/posts", payload: { content: "x" } });
+    const postId = create.json().id as string;
+
+    const res = await app.inject({ method: "DELETE", url: `/posts/${postId}/schedule` });
+    expect(res.statusCode).toBe(200);
+    expect(queue.unschedule).toHaveBeenCalledWith(postId);
     await app.close();
   });
 });

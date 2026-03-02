@@ -78,4 +78,17 @@ export async function registerPublishRoutes(
       schedule_cron: post.schedule_cron
     });
   });
+
+  app.delete("/posts/:id/schedule", async (request, reply) => {
+    const params = request.params as { id?: string };
+    const postId = params.id;
+    if (!postId || !store.byId.has(postId)) {
+      return reply.code(404).send({ error: "post not found" });
+    }
+    await queue.unschedule(postId);
+    const post = store.byId.get(postId)!;
+    post.schedule_cron = undefined;
+    post.updated_at = new Date().toISOString();
+    return reply.code(200).send({ post_id: postId, schedule_cron: null });
+  });
 }
