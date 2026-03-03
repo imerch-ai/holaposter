@@ -2,22 +2,12 @@ import type { PublishQueuePayload } from "../domain/types";
 
 export interface PublishQueue {
   enqueue(payload: PublishQueuePayload): Promise<void>;
-  schedule(payload: PublishQueuePayload, cron: string): Promise<void>;
-  unschedule(postId: string, cron?: string): Promise<void>;
   getStats(): Promise<{ queued: number; publishing: number; failed: number }>;
   close(): Promise<void>;
 }
 
 export class NoopPublishQueue implements PublishQueue {
   async enqueue(_payload: PublishQueuePayload): Promise<void> {
-    return;
-  }
-
-  async schedule(_payload: PublishQueuePayload, _cron: string): Promise<void> {
-    return;
-  }
-
-  async unschedule(_postId: string, _cron?: string): Promise<void> {
     return;
   }
 

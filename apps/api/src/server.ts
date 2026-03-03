@@ -32,7 +32,7 @@ export function buildServer(options: BuildServerOptions = {}) {
       }
       callback(null, allowedOrigins.has(origin));
     },
-    methods: ["GET", "POST", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
   });
 

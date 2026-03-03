@@ -1,4 +1,4 @@
-export type PostStatus = "draft" | "queued" | "publishing" | "published" | "failed";
+export type PostStatus = "draft" | "queued" | "publishing" | "scheduled" | "published" | "failed";
 
 export interface PostRecord {
   id: string;
@@ -9,7 +9,6 @@ export interface PostRecord {
   external_post_id?: string;
   error_code?: string;
   error_message?: string;
-  schedule_cron?: string;
   scheduled_at?: string;
 }
 
@@ -17,6 +16,7 @@ export interface PublishQueuePayload {
   post_id: string;
   content: string;
   holaboss_user_id: string;
+  scheduled_at?: string;
 }
 
 export interface PublishJobState {

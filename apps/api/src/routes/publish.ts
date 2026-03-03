@@ -5,7 +5,7 @@ import type { PublishQueue } from "../queue/publish-queue";
 import type { PostStore } from "./posts";
 
 const scheduleBodySchema = z.object({
-  cron: z.string().min(1)
+  scheduled_at: z.string().datetime()
 });
 
 export async function registerPublishRoutes(
@@ -35,10 +35,7 @@ export async function registerPublishRoutes(
       holaboss_user_id
     });
 
-    return reply.code(202).send({
-      post_id: post.id,
-      status: post.status
-    });
+    return reply.code(202).send({ post_id: post.id, status: post.status });
   });
 
   app.post("/posts/:id/schedule", async (request, reply) => {
@@ -55,40 +52,25 @@ export async function registerPublishRoutes(
 
     const parsedBody = scheduleBodySchema.safeParse(request.body);
     if (!parsedBody.success) {
-      return reply.code(400).send({ error: "cron is required" });
+      return reply.code(400).send({ error: "scheduled_at is required and must be an ISO datetime" });
     }
 
     const post = store.byId.get(postId)!;
     post.status = "queued";
-    post.schedule_cron = parsedBody.data.cron;
+    post.scheduled_at = parsedBody.data.scheduled_at;
     post.updated_at = new Date().toISOString();
 
-    await queue.schedule(
-      {
-        post_id: post.id,
-        content: post.content,
-        holaboss_user_id
-      },
-      parsedBody.data.cron
-    );
+    await queue.enqueue({
+      post_id: post.id,
+      content: post.content,
+      holaboss_user_id,
+      scheduled_at: parsedBody.data.scheduled_at
+    });
 
     return reply.code(202).send({
       post_id: post.id,
       status: post.status,
-      schedule_cron: post.schedule_cron
+      scheduled_at: post.scheduled_at
     });
-  });
-
-  app.delete("/posts/:id/schedule", async (request, reply) => {
-    const params = request.params as { id?: string };
-    const postId = params.id;
-    if (!postId || !store.byId.has(postId)) {
-      return reply.code(404).send({ error: "post not found" });
-    }
-    const post = store.byId.get(postId)!;
-    await queue.unschedule(postId, post.schedule_cron);
-    post.schedule_cron = undefined;
-    post.updated_at = new Date().toISOString();
-    return reply.code(200).send({ post_id: postId, schedule_cron: null });
   });
 }
