@@ -7,7 +7,7 @@ import type { PostStore } from "./posts";
 const jobStateSchema = z.object({
   post_id: z.string().min(1),
   holaboss_user_id: z.string().min(1),
-  status: z.enum(["publishing", "published", "failed"]),
+  status: z.enum(["publishing", "scheduled", "published", "failed"]),
   error_code: z.string().optional(),
   error_message: z.string().optional(),
   external_post_id: z.string().optional()
