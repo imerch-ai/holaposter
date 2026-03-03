@@ -61,10 +61,53 @@ export async function queuePublish(
   const holaboss_user_id = process.env.HOLABOSS_USER_ID ?? "";
   post.status = "queued";
   post.updated_at = new Date().toISOString();
-  await queue.enqueue({ post_id, content: post.content, holaboss_user_id });
+  await queue.enqueue({
+    post_id,
+    content: post.content,
+    holaboss_user_id,
+    ...(post.scheduled_at ? { scheduled_at: post.scheduled_at } : {})
+  });
   return { job_id: `job:${post_id}` };
 }
 
+export async function cancelPublish(
+  { post_id }: { post_id: string },
+  store: PostStore
+): Promise<{ cancelled: boolean; error?: string } | null> {
+  const post = store.byId.get(post_id);
+  if (!post) return null;
+
+  if (post.status !== "scheduled" || !post.external_post_id) {
+    return { cancelled: false, error: "post is not in scheduled state" };
+  }
+
+  const holaboss_user_id = process.env.HOLABOSS_USER_ID ?? "";
+  const workspaceApiUrl = (process.env.WORKSPACE_API_URL ?? "http://localhost:3033").replace(/\/+$/, "");
+  const integrationToken = process.env.PLATFORM_INTEGRATION_TOKEN ?? "";
+
+  const res = await fetch(
+    `${workspaceApiUrl}/api/posts/drafts/${post.external_post_id}?userId=${encodeURIComponent(holaboss_user_id)}`,
+    {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        ...(integrationToken ? { Authorization: `Bearer ${integrationToken}` } : {})
+      }
+    }
+  );
+
+  if (!res.ok && res.status !== 404) {
+    const body = await res.text();
+    return { cancelled: false, error: `cancel_failed:${res.status}:${body}` };
+  }
+
+  post.status = "draft";
+  post.external_post_id = undefined;
+  post.scheduled_at = undefined;
+  post.updated_at = new Date().toISOString();
+
+  return { cancelled: true };
+}
 
 export async function getPublishStatus(
   { post_id }: { post_id: string },

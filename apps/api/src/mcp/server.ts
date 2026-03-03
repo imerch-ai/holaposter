@@ -53,6 +53,14 @@ export function buildMcpServer(store: PostStore, queue: PublishQueue): McpServer
     return { content: [{ type: "text" as const, text: JSON.stringify(result) }] };
   });
 
+  mcp.tool("cancel_publish", "Cancel a scheduled post — reverts it to draft status", {
+    post_id: z.string()
+  }, async ({ post_id }) => {
+    const result = await tools.cancelPublish({ post_id }, store);
+    if (!result) return { content: [{ type: "text" as const, text: "post not found" }], isError: true };
+    return { content: [{ type: "text" as const, text: JSON.stringify(result) }], isError: !result.cancelled };
+  });
+
   mcp.tool("get_publish_status", "Get current publish status for a post", {
     post_id: z.string()
   }, async ({ post_id }) => {

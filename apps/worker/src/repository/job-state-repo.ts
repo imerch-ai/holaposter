@@ -1,4 +1,4 @@
-export type PublishJobStatus = "queued" | "publishing" | "published" | "failed";
+export type PublishJobStatus = "queued" | "publishing" | "scheduled" | "published" | "failed";
 
 export interface PublishJobState {
   post_id: string;
