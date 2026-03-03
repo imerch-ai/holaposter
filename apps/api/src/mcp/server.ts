@@ -30,7 +30,7 @@ export function buildMcpServer(store: PostStore, queue: PublishQueue): McpServer
   });
 
   mcp.tool("list_posts", "List posts, optionally filtered by status", {
-    status: z.enum(["draft", "queued", "publishing", "published", "failed"]).optional(),
+    status: z.enum(["draft", "queued", "publishing", "scheduled", "published", "failed"]).optional(),
     limit: z.number().int().positive().optional()
   }, async ({ status, limit }) => {
     const posts = await tools.listPosts({ status, limit }, store);
@@ -51,13 +51,6 @@ export function buildMcpServer(store: PostStore, queue: PublishQueue): McpServer
     const result = await tools.queuePublish({ post_id }, store, queue);
     if (!result) return { content: [{ type: "text" as const, text: "post not found" }], isError: true };
     return { content: [{ type: "text" as const, text: JSON.stringify(result) }] };
-  });
-
-  mcp.tool("cancel_publish", "Cancel scheduled or queued publish for a post", {
-    post_id: z.string()
-  }, async ({ post_id }) => {
-    const ok = await tools.cancelPublish({ post_id }, store, queue);
-    return { content: [{ type: "text" as const, text: ok ? "cancelled" : "post not found" }], isError: !ok };
   });
 
   mcp.tool("get_publish_status", "Get current publish status for a post", {

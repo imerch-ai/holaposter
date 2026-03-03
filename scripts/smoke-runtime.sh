@@ -43,7 +43,7 @@ COUNT=$(echo "$LIST" | node -e \
 
 [ "$COUNT" -ge 1 ] && pass "list posts ($COUNT found)" || fail "list posts returned empty"
 
-# ── 5. Publish (no holaboss_user_id in body) ──────────────────────────────────
+# ── 5. Publish (immediate) ────────────────────────────────────────────────────
 
 PUB=$(curl -sf -X POST "$API/posts/$POST_ID/publish" \
   -H "Content-Type: application/json" \
@@ -53,7 +53,7 @@ PUB_STATUS=$(echo "$PUB" | node -e \
 
 [ "$PUB_STATUS" = "queued" ] && pass "publish post" || fail "publish returned status=$PUB_STATUS"
 
-# ── 6. Schedule ───────────────────────────────────────────────────────────────
+# ── 6. Schedule (platform-native scheduled_at) ────────────────────────────────
 
 CREATE2=$(curl -sf -X POST "$API/posts" \
   -H "Content-Type: application/json" \
@@ -63,19 +63,19 @@ POST_ID2=$(echo "$CREATE2" | node -e \
 
 SCHED=$(curl -sf -X POST "$API/posts/$POST_ID2/schedule" \
   -H "Content-Type: application/json" \
+  -d '{"scheduled_at":"2026-12-31T23:00:00.000Z"}')
+SCHED_AT=$(echo "$SCHED" | node -e \
+  "process.stdin.on('data',d=>process.stdout.write(JSON.parse(d).scheduled_at))")
+
+[ "$SCHED_AT" = "2026-12-31T23:00:00.000Z" ] && pass "schedule post" || fail "schedule returned scheduled_at=$SCHED_AT"
+
+# ── 7. Schedule bad request (old cron body rejected) ──────────────────────────
+
+BAD_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$API/posts/$POST_ID2/schedule" \
+  -H "Content-Type: application/json" \
   -d '{"cron":"*/15 * * * *"}')
-SCHED_CRON=$(echo "$SCHED" | node -e \
-  "process.stdin.on('data',d=>process.stdout.write(JSON.parse(d).schedule_cron))")
 
-[ "$SCHED_CRON" = "*/15 * * * *" ] && pass "schedule post" || fail "schedule returned cron=$SCHED_CRON"
-
-# ── 7. Cancel schedule ────────────────────────────────────────────────────────
-
-CANCEL=$(curl -sf -X DELETE "$API/posts/$POST_ID2/schedule")
-CANCEL_CRON=$(echo "$CANCEL" | node -e \
-  "process.stdin.on('data',d=>{ const v=JSON.parse(d).schedule_cron; process.stdout.write(v===null?'null':String(v)); })")
-
-[ "$CANCEL_CRON" = "null" ] && pass "cancel schedule" || fail "cancel schedule returned cron=$CANCEL_CRON"
+[ "$BAD_STATUS" = "400" ] && pass "schedule rejects cron body (400)" || fail "schedule with cron body returned $BAD_STATUS (expected 400)"
 
 # ── 8. MCP tools/list ────────────────────────────────────────────────────────
 
@@ -121,7 +121,7 @@ TOOLS_N=$(echo "$MCP_TOOLS" | node -e "
   });
 ")
 
-[ "$TOOLS_N" -eq 8 ] && pass "mcp tools/list ($TOOLS_N tools)" || fail "mcp tools/list returned $TOOLS_N tools (expected 8)"
+[ "$TOOLS_N" -eq 7 ] && pass "mcp tools/list ($TOOLS_N tools)" || fail "mcp tools/list returned $TOOLS_N tools (expected 7)"
 
 # ─────────────────────────────────────────────────────────────────────────────
 echo ""

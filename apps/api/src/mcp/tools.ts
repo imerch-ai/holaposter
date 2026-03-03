@@ -65,18 +65,6 @@ export async function queuePublish(
   return { job_id: `job:${post_id}` };
 }
 
-export async function cancelPublish(
-  { post_id }: { post_id: string },
-  store: PostStore,
-  queue: PublishQueue
-): Promise<boolean> {
-  const post = store.byId.get(post_id);
-  if (!post) return false;
-  await queue.unschedule(post_id);
-  post.schedule_cron = undefined;
-  post.updated_at = new Date().toISOString();
-  return true;
-}
 
 export async function getPublishStatus(
   { post_id }: { post_id: string },
