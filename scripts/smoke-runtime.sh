@@ -81,6 +81,7 @@ BAD_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$API/posts/$POST_ID
 
 MCP_INIT=$(curl -sf -X POST "$MCP/mcp" \
   -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"smoke","version":"0"}}}')
 
 TOOL_COUNT=$(echo "$MCP_INIT" | node -e "
@@ -103,6 +104,7 @@ TOOL_COUNT=$(echo "$MCP_INIT" | node -e "
 
 MCP_TOOLS=$(curl -sf -X POST "$MCP/mcp" \
   -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}')
 
 TOOLS_N=$(echo "$MCP_TOOLS" | node -e "
@@ -121,7 +123,7 @@ TOOLS_N=$(echo "$MCP_TOOLS" | node -e "
   });
 ")
 
-[ "$TOOLS_N" -eq 7 ] && pass "mcp tools/list ($TOOLS_N tools)" || fail "mcp tools/list returned $TOOLS_N tools (expected 7)"
+[ "$TOOLS_N" -eq 8 ] && pass "mcp tools/list ($TOOLS_N tools)" || fail "mcp tools/list returned $TOOLS_N tools (expected 8)"
 
 # ─────────────────────────────────────────────────────────────────────────────
 echo ""
