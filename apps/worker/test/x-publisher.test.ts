@@ -86,4 +86,46 @@ describe("PlatformXPublisher", () => {
     ).rejects.toThrow("x_publish_failed:missing_integration_id_config");
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it("creates draft then sets scheduledDate when scheduled_at is provided", async () => {
+    process.env.WORKSPACE_API_URL = "http://workspace-api:3033";
+    process.env.WORKSPACE_X_INTEGRATION_ID = "integration-1";
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ postId: "draft-1" })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({})
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const publisher = new PlatformXPublisher();
+    const result = await publisher.publishToX({
+      holaboss_user_id: "u1",
+      content: "scheduled post",
+      scheduled_at: "2026-03-15T14:00:00.000Z"
+    });
+
+    // First call: create draft
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "http://workspace-api:3033/api/posts/drafts?userId=u1",
+      expect.objectContaining({ method: "POST" })
+    );
+    // Second call: set scheduledDate (not /publish)
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "http://workspace-api:3033/api/posts/drafts/draft-1?userId=u1",
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({ scheduledDate: "2026-03-15T14:00:00.000Z" })
+      })
+    );
+    expect(result).toEqual({ external_post_id: "draft-1" });
+  });
 });

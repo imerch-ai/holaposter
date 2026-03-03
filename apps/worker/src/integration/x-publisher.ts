@@ -1,6 +1,7 @@
 export interface PublishToXInput {
   holaboss_user_id: string;
   content: string;
+  scheduled_at?: string;
 }
 
 export interface PublishToXOutput {
@@ -56,6 +57,26 @@ export class PlatformXPublisher implements XPublisher {
       throw new Error("x_publish_failed:missing_draft_id");
     }
 
+    if (input.scheduled_at) {
+      // Platform-native scheduling: set scheduledDate, platform handles publish
+      const scheduleResponse = await fetch(
+        `${this.workspaceApiUrl}/api/posts/drafts/${draftId}?userId=${encodeURIComponent(input.holaboss_user_id)}`,
+        {
+          method: "PUT",
+          headers: this.buildHeaders(),
+          body: JSON.stringify({ scheduledDate: input.scheduled_at })
+        }
+      );
+
+      if (!scheduleResponse.ok) {
+        const body = await scheduleResponse.text();
+        throw new Error(`x_publish_failed:set_schedule:${scheduleResponse.status}:${body}`);
+      }
+
+      return { external_post_id: draftId };
+    }
+
+    // Immediate publish (existing flow)
     const publishResponse = await fetch(`${this.workspaceApiUrl}/api/posts/drafts/${draftId}/publish`, {
       method: "PUT",
       headers: this.buildHeaders(),
