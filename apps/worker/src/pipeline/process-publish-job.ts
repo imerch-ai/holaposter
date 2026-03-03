@@ -5,6 +5,7 @@ export interface PublishJobPayload {
   post_id: string;
   holaboss_user_id: string;
   content: string;
+  scheduled_at?: string;
 }
 
 export interface ProcessPublishDependencies {
@@ -23,16 +24,19 @@ export async function processPublishJob(
   });
 
   try {
-    const published = await deps.publishToX({
+    const result = await deps.publishToX({
       holaboss_user_id: payload.holaboss_user_id,
-      content: payload.content
+      content: payload.content,
+      scheduled_at: payload.scheduled_at
     });
+
+    const finalStatus = payload.scheduled_at ? "scheduled" : "published";
 
     await deps.saveJobState({
       post_id: payload.post_id,
       holaboss_user_id: payload.holaboss_user_id,
-      status: "published",
-      external_post_id: published.external_post_id
+      status: finalStatus,
+      external_post_id: result.external_post_id
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "unknown_error";

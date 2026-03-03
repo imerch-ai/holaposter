@@ -17,4 +17,21 @@ describe("processPublishJob", () => {
       expect.objectContaining({ status: "published", external_post_id: "x123" })
     );
   });
+
+  it("schedules on platform and marks job scheduled", async () => {
+    const publish = vi.fn().mockResolvedValue({ external_post_id: "draft-1" });
+    const save = vi.fn().mockResolvedValue(undefined);
+
+    await processPublishJob(
+      { post_id: "p1", holaboss_user_id: "u1", content: "hello", scheduled_at: "2026-03-15T14:00:00.000Z" },
+      { publishToX: publish, saveJobState: save }
+    );
+
+    expect(publish).toHaveBeenCalledWith(
+      expect.objectContaining({ scheduled_at: "2026-03-15T14:00:00.000Z" })
+    );
+    expect(save).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "scheduled" })
+    );
+  });
 });
