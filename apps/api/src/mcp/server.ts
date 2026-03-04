@@ -4,11 +4,12 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
 
+import type { MetricsClient } from "../metrics/metrics-client";
 import type { PublishQueue } from "../queue/publish-queue";
 import type { PostStore } from "../routes/posts";
 import * as tools from "./tools";
 
-export function buildMcpServer(store: PostStore, queue: PublishQueue): McpServer {
+export function buildMcpServer(store: PostStore, queue: PublishQueue, metricsClient: MetricsClient): McpServer {
   const mcp = new McpServer({ name: "postsyncer", version: "1.0.0" });
 
   mcp.tool("create_post", "Create a new post draft", {
@@ -74,19 +75,37 @@ export function buildMcpServer(store: PostStore, queue: PublishQueue): McpServer
     return { content: [{ type: "text" as const, text: JSON.stringify(stats) }] };
   });
 
+  mcp.tool("get_post_metrics", "Get X/Twitter engagement metrics for a published post (likes, views, retweets, etc.)", {
+    post_id: z.string().describe("Internal post ID (must be published with an external_post_id)")
+  }, async ({ post_id }) => {
+    const result = await tools.getPostMetrics({ post_id }, store, metricsClient);
+    if (!result) return { content: [{ type: "text" as const, text: "post not found" }], isError: true };
+    if ("error" in result) return { content: [{ type: "text" as const, text: result.error }], isError: true };
+    return { content: [{ type: "text" as const, text: JSON.stringify(result) }] };
+  });
+
+  mcp.tool("get_metrics_overview", "Get overall X/Twitter post metrics overview — totals, top posts, best posting hours", {
+    time_range: z.enum(["7d", "30d", "90d"]).optional().describe("Time range for stats (default: 7d)")
+  }, async ({ time_range }) => {
+    const result = await tools.getMetricsOverview({ time_range }, metricsClient);
+    return { content: [{ type: "text" as const, text: JSON.stringify(result) }] };
+  });
+
   return mcp;
 }
 
 export function startMcpServer({
   port,
   store,
-  queue
+  queue,
+  metricsClient
 }: {
   port: number;
   store: PostStore;
   queue: PublishQueue;
+  metricsClient: MetricsClient;
 }): Promise<http.Server> {
-  const mcp = buildMcpServer(store, queue);
+  const mcp = buildMcpServer(store, queue, metricsClient);
 
   const httpServer = http.createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", "http://localhost");

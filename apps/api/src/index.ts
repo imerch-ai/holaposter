@@ -1,5 +1,6 @@
 import { buildServer } from "./server";
 import { BullMqPublishQueue } from "./queue/bullmq-publish-queue";
+import { WorkspaceMetricsClient } from "./metrics/metrics-client";
 import { sharedPostStore } from "./store/post-store";
 import { startMcpServer } from "./mcp/server";
 
@@ -18,8 +19,9 @@ async function start() {
     process.exit(1);
   }
 
+  const metricsClient = new WorkspaceMetricsClient();
   const mcpPort = Number(process.env.MCP_PORT ?? "3099");
-  const mcpServer = await startMcpServer({ port: mcpPort, store: sharedPostStore, queue });
+  const mcpServer = await startMcpServer({ port: mcpPort, store: sharedPostStore, queue, metricsClient });
   console.info("postsyncer_mcp_started", { port: mcpPort });
 
   const shutdown = async (signal: string) => {
