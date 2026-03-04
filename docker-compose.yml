@@ -40,6 +40,9 @@ services:
       PUBLISH_QUEUE_NAME: ${PUBLISH_QUEUE_NAME:-publish_queue}
       PUBLISH_RETRY_ATTEMPTS: ${PUBLISH_RETRY_ATTEMPTS:-5}
       PUBLISH_RETRY_BACKOFF_MS: ${PUBLISH_RETRY_BACKOFF_MS:-1000}
+      WORKSPACE_API_URL: ${WORKSPACE_API_URL:-http://host.docker.internal:3033}
+      PLATFORM_INTEGRATION_TOKEN: ${PLATFORM_INTEGRATION_TOKEN:-}
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-}
     depends_on:
       redis:
         condition: service_healthy

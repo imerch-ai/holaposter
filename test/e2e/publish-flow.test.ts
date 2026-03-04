@@ -2,13 +2,12 @@ import { describe, expect, it } from "vitest";
 
 interface E2EPost {
   id: string;
-  status: "draft" | "queued" | "publishing" | "published" | "failed";
+  status: "draft" | "queued" | "publishing" | "scheduled" | "published" | "failed";
   external_post_id?: string;
   error_code?: string;
 }
 
 const API_BASE_URL = process.env.E2E_API_BASE_URL ?? "http://127.0.0.1:8080";
-const HOLABOSS_USER_ID = process.env.E2E_HOLABOSS_USER_ID ?? "e2e-user";
 
 async function waitForTerminalStatus(postId: string, timeoutMs = 30000): Promise<E2EPost> {
   const startedAt = Date.now();
@@ -37,8 +36,7 @@ describe("e2e publish flow", () => {
 
     const publishResponse = await fetch(`${API_BASE_URL}/posts/${created.id}/publish`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ holaboss_user_id: HOLABOSS_USER_ID })
+      headers: { "Content-Type": "application/json" }
     });
     expect(publishResponse.status).toBe(202);
 

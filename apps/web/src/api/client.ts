@@ -1,4 +1,4 @@
-export type PostStatus = "draft" | "queued" | "publishing" | "published" | "failed";
+export type PostStatus = "draft" | "queued" | "publishing" | "scheduled" | "published" | "failed";
 
 export interface PostRecord {
   id: string;
@@ -6,7 +6,7 @@ export interface PostRecord {
   status: PostStatus;
   created_at: string;
   updated_at: string;
-  schedule_cron?: string;
+  scheduled_at?: string;
   external_post_id?: string;
   error_code?: string;
   error_message?: string;
@@ -36,26 +36,27 @@ export async function listPosts(): Promise<PostRecord[]> {
   return (await response.json()) as PostRecord[];
 }
 
-export async function publishDraft(postId: string, holabossUserId: string): Promise<void> {
+export async function publishDraft(postId: string): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/posts/${postId}/publish`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ holaboss_user_id: holabossUserId })
+    headers: { "Content-Type": "application/json" }
   });
 
   if (!response.ok) {
-    throw new Error(`publish_failed:${response.status}`);
+    const body = await response.text();
+    throw new Error(`publish_failed:${response.status}:${body}`);
   }
 }
 
-export async function scheduleDraft(postId: string, holabossUserId: string, cron: string): Promise<void> {
+export async function scheduleDraft(postId: string, scheduledAt: string): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/posts/${postId}/schedule`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ holaboss_user_id: holabossUserId, cron })
+    body: JSON.stringify({ scheduled_at: scheduledAt })
   });
 
   if (!response.ok) {
-    throw new Error(`schedule_failed:${response.status}`);
+    const body = await response.text();
+    throw new Error(`schedule_failed:${response.status}:${body}`);
   }
 }
