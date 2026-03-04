@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import type { PostRecord } from "../domain/types";
+import type { MetricsClient, MetricsOverviewResult, PostMetricsResult } from "../metrics/metrics-client";
 import type { PublishQueue } from "../queue/publish-queue";
 import type { PostStore } from "../routes/posts";
 
@@ -124,4 +125,24 @@ export async function getPublishStatus(
 
 export async function getQueueStats(queue: PublishQueue) {
   return queue.getStats();
+}
+
+export async function getPostMetrics(
+  { post_id }: { post_id: string },
+  store: PostStore,
+  metricsClient: MetricsClient
+): Promise<PostMetricsResult | { error: string } | null> {
+  const post = store.byId.get(post_id);
+  if (!post) return null;
+  if (!post.external_post_id) {
+    return { error: "post has no external_post_id — not yet published" };
+  }
+  return metricsClient.getPostMetrics(post.external_post_id);
+}
+
+export async function getMetricsOverview(
+  { time_range }: { time_range?: string },
+  metricsClient: MetricsClient
+): Promise<MetricsOverviewResult> {
+  return metricsClient.getOverview(time_range ?? "7d");
 }
