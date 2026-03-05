@@ -1,5 +1,5 @@
-app_id: "holaposter-ts-lite"
-name: "HolaPoster TS Lite"
+app_id: "holaposter"
+name: "HolaPoster"
 slug: "holaposter"
 services:
   web:
