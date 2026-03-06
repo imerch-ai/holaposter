@@ -14,6 +14,7 @@ export async function createPost(
 
   const integrationToken = process.env.PLATFORM_INTEGRATION_TOKEN ?? "";
   const integrationId = process.env.INTEGRATION_ID;
+  const userId = process.env.HOLABOSS_USER_ID;
 
   const res = await fetch(`${workspaceApiUrl}/api/posts/drafts`, {
     method: "POST",
@@ -25,7 +26,8 @@ export async function createPost(
       provider,
       content,
       ...(scheduled_at ? { scheduledDate: scheduled_at } : {}),
-      ...(integrationId ? { integrationId } : {})
+      ...(integrationId ? { integrationId } : {}),
+      ...(userId ? { userId } : {})
     })
   });
 
