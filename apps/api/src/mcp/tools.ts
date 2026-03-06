@@ -6,9 +6,35 @@ import type { PublishQueue } from "../queue/publish-queue";
 import type { PostStore } from "../routes/posts";
 
 export async function createPost(
-  { content, scheduled_at }: { content: string; scheduled_at?: string },
+  { content, scheduled_at, provider = "twitter-xdnq" }: { content: string; scheduled_at?: string; provider?: string },
   store: PostStore
 ): Promise<PostRecord> {
+  const workspaceApiUrl = (process.env.WORKSPACE_API_URL ?? "").replace(/\/+$/, "");
+  if (!workspaceApiUrl) throw new Error("WORKSPACE_API_URL is not configured");
+
+  const integrationToken = process.env.PLATFORM_INTEGRATION_TOKEN ?? "";
+  const integrationId = process.env.INTEGRATION_ID;
+
+  const res = await fetch(`${workspaceApiUrl}/api/posts/drafts`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(integrationToken ? { Authorization: `Bearer ${integrationToken}` } : {})
+    },
+    body: JSON.stringify({
+      provider,
+      content,
+      ...(scheduled_at ? { scheduledDate: scheduled_at } : {}),
+      ...(integrationId ? { integrationId } : {})
+    })
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`create_draft_failed:${res.status}:${text}`);
+  }
+
+  const draft = (await res.json()) as { id: string };
   const now = new Date().toISOString();
   const post: PostRecord = {
     id: randomUUID(),
@@ -16,10 +42,10 @@ export async function createPost(
     status: "draft",
     created_at: now,
     updated_at: now,
+    external_post_id: draft.id,
     ...(scheduled_at ? { scheduled_at } : {})
   };
   store.byId.set(post.id, post);
-  store.list.push(post);
   return post;
 }
 
@@ -39,7 +65,7 @@ export async function listPosts(
   { status, limit }: { status?: string; limit?: number },
   store: PostStore
 ): Promise<PostRecord[]> {
-  let result = store.list;
+  let result = Array.from(store.byId.values());
   if (status) result = result.filter((p) => p.status === status);
   if (limit) result = result.slice(0, limit);
   return result;

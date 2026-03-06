@@ -12,11 +12,12 @@ import * as tools from "./tools";
 export function buildMcpServer(store: PostStore, queue: PublishQueue, metricsClient: MetricsClient): McpServer {
   const mcp = new McpServer({ name: "postsyncer", version: "1.0.0" });
 
-  mcp.tool("create_post", "Create a new post draft", {
+  mcp.tool("create_post", "Create a new post draft via the workspace draft API", {
     content: z.string().min(1).describe("Post text content"),
-    scheduled_at: z.string().optional().describe("ISO 8601 datetime for one-time scheduled publish")
-  }, async ({ content, scheduled_at }) => {
-    const post = await tools.createPost({ content, scheduled_at }, store);
+    scheduled_at: z.string().optional().describe("ISO 8601 datetime for scheduled publish"),
+    provider: z.string().optional().describe("Platform provider: twitter-xdnq | linkedin | reddit (default: twitter-xdnq)")
+  }, async ({ content, scheduled_at, provider }) => {
+    const post = await tools.createPost({ content, scheduled_at, provider }, store);
     return { content: [{ type: "text" as const, text: JSON.stringify(post) }] };
   });
 
