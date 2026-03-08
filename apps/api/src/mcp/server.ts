@@ -106,8 +106,6 @@ export function startMcpServer({
   queue: PublishQueue;
   metricsClient: MetricsClient;
 }): Promise<http.Server> {
-  const mcp = buildMcpServer(store, queue, metricsClient);
-
   const httpServer = http.createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", "http://localhost");
 
@@ -118,6 +116,7 @@ export function startMcpServer({
     }
 
     if (url.pathname === "/mcp") {
+      const mcp = buildMcpServer(store, queue, metricsClient);
       const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
       res.on("close", () => void transport.close());
       await mcp.connect(transport);
