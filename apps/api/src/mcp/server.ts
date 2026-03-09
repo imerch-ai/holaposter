@@ -15,9 +15,10 @@ export function buildMcpServer(store: PostStore, queue: PublishQueue, metricsCli
   mcp.tool("create_post", "Create a new post draft via the workspace draft API", {
     content: z.string().min(1).describe("Post text content"),
     scheduled_at: z.string().optional().describe("ISO 8601 datetime for scheduled publish"),
-    provider: z.string().optional().describe("Platform provider: twitter-xdnq | linkedin | reddit (default: twitter-xdnq)")
-  }, async ({ content, scheduled_at, provider }) => {
-    const post = await tools.createPost({ content, scheduled_at, provider }, store);
+    provider: z.string().optional().describe("Platform provider: twitter-xdnq | linkedin | reddit (default: twitter-xdnq)"),
+    profileId: z.string().optional().describe("Workspace profile ID")
+  }, async ({ content, scheduled_at, provider, profileId }) => {
+    const post = await tools.createPost({ content, scheduled_at, provider, profileId }, store);
     return { content: [{ type: "text" as const, text: JSON.stringify(post) }] };
   });
 
@@ -48,17 +49,19 @@ export function buildMcpServer(store: PostStore, queue: PublishQueue, metricsCli
   });
 
   mcp.tool("queue_publish", "Queue a post for immediate publishing to X", {
-    post_id: z.string()
-  }, async ({ post_id }) => {
-    const result = await tools.queuePublish({ post_id }, store, queue);
+    post_id: z.string(),
+    profileId: z.string().optional().describe("Workspace profile ID")
+  }, async ({ post_id, profileId }) => {
+    const result = await tools.queuePublish({ post_id, profileId }, store, queue);
     if (!result) return { content: [{ type: "text" as const, text: "post not found" }], isError: true };
     return { content: [{ type: "text" as const, text: JSON.stringify(result) }] };
   });
 
   mcp.tool("cancel_publish", "Cancel a scheduled post — reverts it to draft status", {
-    post_id: z.string()
-  }, async ({ post_id }) => {
-    const result = await tools.cancelPublish({ post_id }, store);
+    post_id: z.string(),
+    profileId: z.string().optional().describe("Workspace profile ID")
+  }, async ({ post_id, profileId }) => {
+    const result = await tools.cancelPublish({ post_id, profileId }, store);
     if (!result) return { content: [{ type: "text" as const, text: "post not found" }], isError: true };
     return { content: [{ type: "text" as const, text: JSON.stringify(result) }], isError: !result.cancelled };
   });
