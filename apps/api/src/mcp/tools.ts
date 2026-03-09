@@ -6,7 +6,7 @@ import type { PublishQueue } from "../queue/publish-queue";
 import type { PostStore } from "../routes/posts";
 
 export async function createPost(
-  { content, scheduled_at, profileId, provider = "twitter-xdnq" }: { content: string; scheduled_at?: string; profileId?: string; provider?: string },
+  { content, scheduled_at, workspaceId, provider = "twitter-xdnq" }: { content: string; scheduled_at?: string; workspaceId?: string; provider?: string },
   store: PostStore
 ): Promise<PostRecord> {
   const workspaceApiUrl = (process.env.WORKSPACE_API_URL ?? "").replace(/\/+$/, "");
@@ -28,7 +28,7 @@ export async function createPost(
       ...(scheduled_at ? { scheduledDate: scheduled_at } : {}),
       ...(integrationId ? { integrationId } : {}),
       ...(userId ? { userId } : {}),
-      ...(profileId ? { profileId } : {})
+      ...(workspaceId ? { workspaceId } : {})
     })
   });
 
@@ -82,7 +82,7 @@ export async function getPost(
 }
 
 export async function queuePublish(
-  { post_id, profileId }: { post_id: string; profileId?: string },
+  { post_id, workspaceId }: { post_id: string; workspaceId?: string },
   store: PostStore,
   queue: PublishQueue
 ): Promise<{ job_id: string } | null> {
@@ -95,14 +95,14 @@ export async function queuePublish(
     post_id,
     content: post.content,
     holaboss_user_id,
-    ...(profileId ? { profileId } : {}),
+    ...(workspaceId ? { workspaceId } : {}),
     ...(post.scheduled_at ? { scheduled_at: post.scheduled_at } : {})
   });
   return { job_id: `job:${post_id}` };
 }
 
 export async function cancelPublish(
-  { post_id, profileId }: { post_id: string; profileId?: string },
+  { post_id, workspaceId }: { post_id: string; workspaceId?: string },
   store: PostStore
 ): Promise<{ cancelled: boolean; error?: string } | null> {
   const post = store.byId.get(post_id);
@@ -118,7 +118,7 @@ export async function cancelPublish(
 
   const deleteUrl = new URL(`${workspaceApiUrl}/api/posts/drafts/${post.external_post_id}`);
   deleteUrl.searchParams.set("userId", holaboss_user_id);
-  if (profileId) deleteUrl.searchParams.set("profileId", profileId);
+  if (workspaceId) deleteUrl.searchParams.set("workspaceId", workspaceId);
 
   const res = await fetch(deleteUrl.toString(), {
       method: "DELETE",
